@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import BorrowRecord
 from books.serializers import BookSerializer
-from django.contrib.auth.models import User
 
 
 class BorrowRecordSerializer(serializers.ModelSerializer):

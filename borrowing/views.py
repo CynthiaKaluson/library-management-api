@@ -24,39 +24,24 @@ class BorrowRecordViewSet(viewsets.ModelViewSet):
         try:
             book = Book.objects.get(id=book_id)
         except Book.DoesNotExist:
-            return Response(
-                {'error': 'Book not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
 
         if book.copies_available < 1:
-            return Response(
-                {'error': 'No copies available'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'No copies available'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if user already has this book
         existing_borrow = BorrowRecord.objects.filter(
-            user=request.user,
-            book=book,
-            is_returned=False
+            user=request.user, book=book, is_returned=False
         ).exists()
 
         if existing_borrow:
-            return Response(
-                {'error': 'You already have this book borrowed'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'You already have this book borrowed'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        # Create borrow record
         due_date = timezone.now().date() + timedelta(days=14)
         borrow_record = BorrowRecord.objects.create(
-            user=request.user,
-            book=book,
-            due_date=due_date
+            user=request.user, book=book, due_date=due_date
         )
 
-        # Decrease available copies
         book.copies_available -= 1
         book.save()
 
@@ -68,17 +53,13 @@ class BorrowRecordViewSet(viewsets.ModelViewSet):
         borrow_record = self.get_object()
 
         if borrow_record.is_returned:
-            return Response(
-                {'error': 'Book already returned'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'Book already returned'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        # Mark as returned
         borrow_record.is_returned = True
         borrow_record.returned_at = timezone.now()
         borrow_record.save()
 
-        # Increase available copies
         book = borrow_record.book
         book.copies_available += 1
         book.save()
